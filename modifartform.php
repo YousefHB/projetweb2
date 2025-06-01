@@ -1,16 +1,23 @@
 <?php
 require_once "session.php";
+require_once "art.class.php";
 
-$userID = get_user_id();
-$connected = isset($_SESSION["connecte"]) && $_SESSION["connecte"] === "1";
-$role = $connected ? ($_SESSION["role"] ?? '') : '';
+if (!isset($_SESSION['connecte']) || $_SESSION['connecte'] !== "1") {
+    header("Location: login.php");
+    exit;
+}
 
-require_once "user.class.php";
-$user = new User();
-$currentUser = $user->getUserByID($userID);
+if ($_SESSION["role"] !== "artiste") {
+    die("Accès refusé : cette page est réservée aux artistes.");
+}
 
-if (!$currentUser) {
-    die("Erreur : utilisateur introuvable.");
+$artID = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$artObj = new Art();
+$art = $artObj->getArtByID($artID);
+if (!$art || $art->created_by != get_user_id()) {
+
+
+    die("Erreur : publication introuvable ou accès non autorisé.");
 }
 ?>
 <?php
@@ -37,15 +44,12 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
 <?php endif; ?>
 
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.0.0/uicons-regular-straight/css/uicons-regular-straight.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link rel="stylesheet" href="./assets/css/styles.css" />
-    <title>Ecommerce Website</title>
-    <style>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Modifier la publication</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+   <style>
       #notification {
         position: fixed;
         bottom: 20px;
@@ -101,7 +105,7 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
       }
 
       .btn {
-        background-color: hsl(176, 88%, 27%);
+        background-color: #007bff;
         color: white;
         padding: 0.8rem 2rem;
         border: none;
@@ -109,7 +113,11 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
         cursor: pointer;
         font-size: 1rem;
       }
-      
+
+      .btn:hover {
+        background-color: #0056b3;
+      }
+
       .section__title {
         text-align: center;
         font-size: 1.8rem;
@@ -123,19 +131,105 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
         color: #6c757d;
         margin-top: 1.5rem;
       }
-        strong {
+      .form-container {
+  max-width: 500px;
+  margin: 2rem auto;
+  background-color: #ffffff;
+  padding: 2rem 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.form-container h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 700;
+  color: #222;
+}
+
+form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.form__input,
+textarea,
+input[type="file"] {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  border: 1.8px solid #ccc;
+  border-radius: 8px;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+  margin-bottom: 1.5rem;
+  resize: vertical;
+}
+
+.form__input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px #007bffaa;
+}
+
+button[type="submit"] {
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  padding: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  box-shadow: 0 3px 8px rgba(0, 123, 255, 0.5);
+}
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+.old-image-container {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.old-image-container img {
+  max-width: 100%;
+  max-height: 250px;
+  border-radius: 10px;
+  object-fit: contain;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  border: 1.5px solid #ddd;
+}
+
+.old-image-label {
+  font-style: italic;
+  color: #666;
+  margin-bottom: 0.5rem;
+  display: block;
+  font-size: 0.9rem;
+}
+  strong {
     color: #FFAAAA;
   }
+
+
     </style>
-  </head>
-  <body>
-      <?php if ($connected): ?>
+</head>
+<body>
+          <?php if ($connected): ?>
       <div style="background-color: #f1f1f1; padding: 10px; text-align: center; font-family: sans-serif;">
         Bonjour <strong><?= $username ?></strong> !
         <a href="deconnexion.php" style="margin-left: 1rem;">Déconnexion</a>
       </div>
     <?php endif; ?>
-
     <header class="header">
        <nav class="nav container">
         <a href="index.php" class="nav__logo">
@@ -145,13 +239,12 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
             alt="website logo"
           />        </a>
         <div class="nav__menu" id="nav-menu">
-
-         <ul class="nav__list">
+                 <ul class="nav__list">
   <li class="nav__item"><a href="index.php" class="nav__link ">Home</a></li>
   <li class="nav__item"><a href="shop.php" class="nav__link">Shop</a></li>
 
   <?php if ($connected): ?>
-    <li class="nav__item"><a href="accounts.php" class="nav__link active-link">My Account</a></li>
+    <li class="nav__item"><a href="accounts.php" class="nav__link ">My Account</a></li>
     <?php if ($role === "artiste"): ?>
       <li class="nav__item"><a href="compare.php" class="nav__link">Publication</a></li>
     <?php endif; ?>
@@ -161,8 +254,8 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
   <?php endif; ?>
 
   <?php if ($connected && $username === 'root'): ?>
-    <li class="nav__item"><a href="admin.php" class="nav__link">Administration</a></li>
-    <li class="nav__item"><a href="admin_statistiques.php" class="nav__link">Statistique</a></li>
+    <li class="nav__item"><a href="admin.php" class="nav__link ">Administration</a></li>
+    <li class="nav__item"><a href="admin_statistiques.php" class="nav__link ">Statistique</a></li>
   <?php endif; ?>
 </ul>
         </div>
@@ -175,34 +268,32 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
       </nav>
     </header>
 
-    <div class="create-account">
-      <h2 class="section__title">Modifier mes informations</h2>
-      <form action="modifierUser.php" method="post" enctype="multipart/form-data">
-        <input type="hidden" name="id" value="<?= htmlspecialchars($userID) ?>">
+<div class="form-container">
+  <h2>Modifier votre publication</h2>
+<form action="modifart.php" method="post" enctype="multipart/form-data">
+  <input type="hidden" name="id_art" value="<?= htmlspecialchars($art->ID_artwork) ?>">
 
-        <label>Nom d'utilisateur :</label>
-        <input type="text" class="form__input" name="username" required>
+  <label for="titre">Titre :</label>
+  <input type="text" id="titre" name="titre" value="<?= htmlspecialchars($art->title ?? '') ?>" required>
 
-        <label>Mot de passe :</label>
-        <input type="password" class="form__input" name="password"  required>
+  <label for="description">Description :</label>
+  <textarea id="description" name="description" rows="5" required><?= htmlspecialchars($art->description ?? '') ?></textarea>
 
-        <label>Photo de profil :</label>
-        <input type="file" class="form__input" name="profile_picture" accept="image/*">
-
-        <div class="form__btn">
-          <button type="submit" class="btn">Enregistrer les modifications</button>
-        </div>
-      </form>
- <?php if ($connected && $role === "artiste") : ?>
-      <form action="gererArt.php" method="POST" class="form__btn">
-        <button type="submit" class="btn" >Voir vos publication</button>
-      </form>
-                  <?php endif; ?>
+  <label for="prix">Prix (en $) :</label>
+  <input type="text" id="prix" name="prix" value="<?= htmlspecialchars($art->price ?? '') ?>" required>
 
 
-      <div class="art-touch">Votre profil est entre de bonnes mains 👤</div>
-    </div>
-     <!--=============== NEWSLETTER ===============-->
+
+
+  <label for="image">Changer l’image (optionnel) :</label>
+  <input type="file" id="image" name="image" accept="image/*">
+
+  <button type="submit">Enregistrer les modifications</button>
+</form>
+
+</div>
+
+ <!--=============== NEWSLETTER ===============-->
       <section class="newsletter section home__newsletter">
         <div class="newsletter__container container grid">
           <h3 class="newsletter__title flex">
@@ -252,5 +343,6 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
         </div>
       </div>
     </footer>
-  </body>
+
+</body>
 </html>

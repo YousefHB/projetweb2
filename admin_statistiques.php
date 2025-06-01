@@ -1,17 +1,25 @@
 <?php
-require_once "session.php";
+require_once("pdo.php"); // ta connexion PDO ici
+$cnx = new connexion();
+$pdo = $cnx->CNXbase();
 
-$userID = get_user_id();
-$connected = isset($_SESSION["connecte"]) && $_SESSION["connecte"] === "1";
-$role = $connected ? ($_SESSION["role"] ?? '') : '';
+// Nombre de clients
+$stmt = $pdo->query("SELECT COUNT(*) AS nb_clients FROM user WHERE role = 'client'");
+$nb_clients = $stmt->fetch()['nb_clients'];
 
-require_once "user.class.php";
-$user = new User();
-$currentUser = $user->getUserByID($userID);
+// Nombre d'artistes
+$stmt = $pdo->query("SELECT COUNT(*) AS nb_artistes FROM user WHERE role = 'artiste'");
+$nb_artistes = $stmt->fetch()['nb_artistes'];
 
-if (!$currentUser) {
-    die("Erreur : utilisateur introuvable.");
-}
+// Nombre de publications faites par les artistes
+$stmt = $pdo->query("
+  SELECT COUNT(*) AS nb_publications
+  FROM art a
+  JOIN user u ON a.created_by = u.ID
+  WHERE u.role = 'artiste'
+");
+$nb_publications = $stmt->fetch()['nb_publications'];
+
 ?>
 <?php
 require_once "session.php"; // session_start() est déjà dans ce fichier
@@ -20,116 +28,104 @@ $connected = isset($_SESSION["connecte"]) && $_SESSION["connecte"] === "1";
 $username = $connected ? htmlspecialchars($_SESSION["username"] ?? 'Utilisateur') : '';
 $role = $connected ? ($_SESSION["role"] ?? '') : '';
 ?>
-<?php if (isset($_SESSION['notif_success'])) : ?>
-  <div id="notification"><?= htmlspecialchars($_SESSION['notif_success']) ?></div>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const notif = document.getElementById("notification");
-      if (notif) {
-        notif.style.display = "block";
-        setTimeout(() => {
-          notif.style.display = "none";
-        }, 5000);
-      }
-    });
-  </script>
-  <?php unset($_SESSION['notif_success']); ?>
-<?php endif; ?>
 
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.0.0/uicons-regular-straight/css/uicons-regular-straight.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="./assets/css/styles.css" />
-    <title>Ecommerce Website</title>
+    <title>Statistique</title>
+  <style>
+    body { font-family: Arial;  background: #FFFFFFFF; }
+    .card { background: white;  border-radius: 10px; box-shadow: 0 0 10px #ddd; }
+    h1 { color: #333; }
     <style>
-      #notification {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: #28a745;
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        z-index: 9999;
-        font-weight: bold;
-        animation: fadeInOut 5s forwards;
-      }
+  /* Reset minimal */
+  * {
+    box-sizing: border-box;
+  }
 
-      @keyframes fadeInOut {
-        0% { opacity: 0; transform: translateY(20px); }
-        10% { opacity: 1; transform: translateY(0); }
-        90% { opacity: 1; transform: translateY(0); }
-        100% { opacity: 0; transform: translateY(20px); }
-      }
 
-      .create-account {
-        max-width: 400px;
-        margin: auto;
-      }
 
-      form {
-        display: grid;
-        gap: 1rem;
-        padding: 2rem;
-        background-color: #f9f9f9;
-        border-radius: 8px;
-      }
+  /* Header reste normal */
 
-      .form__input {
-        width: 100%;
-        padding: 0.8rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1rem;
-        margin-bottom: 1rem;
-      }
 
-      .form__input:focus {
-        outline: none;
-        border-color: #007bff;
-      }
+  /* Main container prend tout l’espace restant */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* centre verticalement */
+    align-items: center;     /* centre horizontalement */
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
 
-      .form__btn {
-        display: flex;
-        justify-content: center;
-        margin-top: 1.5rem;
-      }
+  h1 {
+    color: #1A7A68
 
-      .btn {
-        background-color: hsl(176, 88%, 27%);
-        color: white;
-        padding: 0.8rem 2rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1rem;
-      }
-      
-      .section__title {
-        text-align: center;
-        font-size: 1.8rem;
-        font-weight: bold;
-        margin-bottom: 1.5rem;
-      }
+;
+    font-weight: 700;
+    margin-bottom: 30px;
+    text-align: center;
+  }
 
-      .art-touch {
-        text-align: center;
-        font-style: italic;
-        color: #6c757d;
-        margin-top: 1.5rem;
-      }
-        strong {
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.15);
+    padding: 30px 40px;
+    margin: 15px;
+    width: 100%;
+    max-width: 400px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgb(0 0 0 / 0.25);
+  }
+
+  .card h2 {
+    margin-top: 0;
+    color: #E73CB9FF;
+    font-weight: 600;
+    margin-bottom: 20px;
+    font-size: 1.6rem;
+  }
+
+  .card p {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #444;
+  }
+
+  strong {
     color: #FFAAAA;
   }
-    </style>
-  </head>
-  <body>
-      <?php if ($connected): ?>
+
+  /* Responsive : sur mobile, cartes en colonne */
+  @media (max-width: 600px) {
+    main {
+      padding: 10px;
+    }
+    .card {
+      max-width: 100%;
+      padding: 20px;
+      margin: 10px 0;
+    }
+  }
+</style>
+
+  </style>
+</head>
+<body>
+ <?php if ($connected): ?>
       <div style="background-color: #f1f1f1; padding: 10px; text-align: center; font-family: sans-serif;">
         Bonjour <strong><?= $username ?></strong> !
         <a href="deconnexion.php" style="margin-left: 1rem;">Déconnexion</a>
@@ -145,13 +141,12 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
             alt="website logo"
           />        </a>
         <div class="nav__menu" id="nav-menu">
-
-         <ul class="nav__list">
+          <ul class="nav__list">
   <li class="nav__item"><a href="index.php" class="nav__link ">Home</a></li>
   <li class="nav__item"><a href="shop.php" class="nav__link">Shop</a></li>
 
   <?php if ($connected): ?>
-    <li class="nav__item"><a href="accounts.php" class="nav__link active-link">My Account</a></li>
+    <li class="nav__item"><a href="accounts.php" class="nav__link ">My Account</a></li>
     <?php if ($role === "artiste"): ?>
       <li class="nav__item"><a href="compare.php" class="nav__link">Publication</a></li>
     <?php endif; ?>
@@ -162,9 +157,10 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
 
   <?php if ($connected && $username === 'root'): ?>
     <li class="nav__item"><a href="admin.php" class="nav__link">Administration</a></li>
-    <li class="nav__item"><a href="admin_statistiques.php" class="nav__link">Statistique</a></li>
+    <li class="nav__item"><a href="admin_statistiques.php" class="nav__link active-link">Statistique</a></li>
   <?php endif; ?>
 </ul>
+
         </div>
         <div class="header__user-actions">
          
@@ -175,34 +171,21 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
       </nav>
     </header>
 
-    <div class="create-account">
-      <h2 class="section__title">Modifier mes informations</h2>
-      <form action="modifierUser.php" method="post" enctype="multipart/form-data">
-        <input type="hidden" name="id" value="<?= htmlspecialchars($userID) ?>">
+ <main>
+  <h1>📊 Statistiques</h1>
 
-        <label>Nom d'utilisateur :</label>
-        <input type="text" class="form__input" name="username" required>
+  <div class="card">
+    <h2>Utilisateurs</h2>
+    <p>👤 Clients inscrits : <strong><?= $nb_clients ?></strong></p>
+    <p>🎨 Artistes inscrits : <strong><?= $nb_artistes ?></strong></p>
+  </div>
 
-        <label>Mot de passe :</label>
-        <input type="password" class="form__input" name="password"  required>
-
-        <label>Photo de profil :</label>
-        <input type="file" class="form__input" name="profile_picture" accept="image/*">
-
-        <div class="form__btn">
-          <button type="submit" class="btn">Enregistrer les modifications</button>
-        </div>
-      </form>
- <?php if ($connected && $role === "artiste") : ?>
-      <form action="gererArt.php" method="POST" class="form__btn">
-        <button type="submit" class="btn" >Voir vos publication</button>
-      </form>
-                  <?php endif; ?>
-
-
-      <div class="art-touch">Votre profil est entre de bonnes mains 👤</div>
-    </div>
-     <!--=============== NEWSLETTER ===============-->
+  <div class="card">
+    <h2>Publications</h2>
+    <p>🖼️ Publications publiées par des artistes : <strong><?= $nb_publications ?></strong></p>
+  </div>
+</main>
+<!--=============== NEWSLETTER ===============-->
       <section class="newsletter section home__newsletter">
         <div class="newsletter__container container grid">
           <h3 class="newsletter__title flex">
@@ -252,5 +235,5 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
         </div>
       </div>
     </footer>
-  </body>
+</body>
 </html>

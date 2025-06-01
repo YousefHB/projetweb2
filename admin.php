@@ -1,4 +1,18 @@
 <?php
+require_once 'session.php';
+require_once 'pdo.php';
+require_once 'art.class.php';
+
+$cnx = new connexion();
+$pdo = $cnx->CNXbase();
+
+$art = new art($pdo);
+
+// Récupérer uniquement les œuvres non approuvées
+$produits = $art->getnotapproverArt();
+?>
+
+<?php
 require_once "session.php";
 
 $userID = get_user_id();
@@ -9,9 +23,7 @@ require_once "user.class.php";
 $user = new User();
 $currentUser = $user->getUserByID($userID);
 
-if (!$currentUser) {
-    die("Erreur : utilisateur introuvable.");
-}
+
 ?>
 <?php
 require_once "session.php"; // session_start() est déjà dans ce fichier
@@ -20,124 +32,83 @@ $connected = isset($_SESSION["connecte"]) && $_SESSION["connecte"] === "1";
 $username = $connected ? htmlspecialchars($_SESSION["username"] ?? 'Utilisateur') : '';
 $role = $connected ? ($_SESSION["role"] ?? '') : '';
 ?>
-<?php if (isset($_SESSION['notif_success'])) : ?>
-  <div id="notification"><?= htmlspecialchars($_SESSION['notif_success']) ?></div>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const notif = document.getElementById("notification");
-      if (notif) {
-        notif.style.display = "block";
-        setTimeout(() => {
-          notif.style.display = "none";
-        }, 5000);
-      }
-    });
-  </script>
-  <?php unset($_SESSION['notif_success']); ?>
-<?php endif; ?>
-
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.0.0/uicons-regular-straight/css/uicons-regular-straight.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link rel="stylesheet" href="./assets/css/styles.css" />
-    <title>Ecommerce Website</title>
-    <style>
-      #notification {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: #28a745;
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        z-index: 9999;
-        font-weight: bold;
-        animation: fadeInOut 5s forwards;
-      }
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Shop</title>
 
-      @keyframes fadeInOut {
-        0% { opacity: 0; transform: translateY(20px); }
-        10% { opacity: 1; transform: translateY(0); }
-        90% { opacity: 1; transform: translateY(0); }
-        100% { opacity: 0; transform: translateY(20px); }
-      }
+  <!--=============== FLATICON ===============-->
+  <link
+    rel="stylesheet"
+    href="https://cdn-uicons.flaticon.com/2.0.0/uicons-regular-straight/css/uicons-regular-straight.css"
+  />
 
-      .create-account {
-        max-width: 400px;
-        margin: auto;
-      }
+  <!--=============== SWIPER CSS ===============-->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+  />
 
-      form {
-        display: grid;
-        gap: 1rem;
-        padding: 2rem;
-        background-color: #f9f9f9;
-        border-radius: 8px;
-      }
+  <!--=============== CSS ===============-->
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+  <style>
+    /* Augmenter légèrement la taille de la carte produit */
+.product__item {
+  padding: 1.5rem;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  background-color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
 
-      .form__input {
-        width: 100%;
-        padding: 0.8rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1rem;
-        margin-bottom: 1rem;
-      }
+.product__item:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
 
-      .form__input:focus {
-        outline: none;
-        border-color: #007bff;
-      }
+/* Agrandir un peu l'image */
+.product__img {
+  height: 260px;
+  object-fit: cover;
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+}
 
-      .form__btn {
-        display: flex;
-        justify-content: center;
-        margin-top: 1.5rem;
-      }
+/* Si tu veux un effet de zoom au survol */
+.product__img.hover:hover {
+  transform: scale(1.05);
+}
 
-      .btn {
-        background-color: hsl(176, 88%, 27%);
-        color: white;
-        padding: 0.8rem 2rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1rem;
-      }
-      
-      .section__title {
-        text-align: center;
-        font-size: 1.8rem;
-        font-weight: bold;
-        margin-bottom: 1.5rem;
-      }
-
-      .art-touch {
-        text-align: center;
-        font-style: italic;
-        color: #6c757d;
-        margin-top: 1.5rem;
-      }
-        strong {
+/* Affichage du créateur */
+.product__creator {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #666;
+}
+.section--lg {
+  padding-top: 0;
+  margin-top: 0;
+}
+  strong {
     color: #FFAAAA;
   }
+
+
     </style>
-  </head>
-  <body>
-      <?php if ($connected): ?>
+</head>
+<body>
+  <?php if ($connected): ?>
       <div style="background-color: #f1f1f1; padding: 10px; text-align: center; font-family: sans-serif;">
         Bonjour <strong><?= $username ?></strong> !
         <a href="deconnexion.php" style="margin-left: 1rem;">Déconnexion</a>
       </div>
     <?php endif; ?>
 
+
     <header class="header">
-       <nav class="nav container">
+      <nav class="nav container">
         <a href="index.php" class="nav__logo">
    <img
             class="nav__logo-img"
@@ -145,13 +116,12 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
             alt="website logo"
           />        </a>
         <div class="nav__menu" id="nav-menu">
-
-         <ul class="nav__list">
+ <ul class="nav__list">
   <li class="nav__item"><a href="index.php" class="nav__link ">Home</a></li>
   <li class="nav__item"><a href="shop.php" class="nav__link">Shop</a></li>
 
-  <?php if ($connected): ?>
-    <li class="nav__item"><a href="accounts.php" class="nav__link active-link">My Account</a></li>
+  <?php if ($connected && $username === 'root'): ?>
+    <li class="nav__item"><a href="accounts.php" class="nav__link ">My Account</a></li>
     <?php if ($role === "artiste"): ?>
       <li class="nav__item"><a href="compare.php" class="nav__link">Publication</a></li>
     <?php endif; ?>
@@ -161,8 +131,8 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
   <?php endif; ?>
 
   <?php if ($connected && $username === 'root'): ?>
-    <li class="nav__item"><a href="admin.php" class="nav__link">Administration</a></li>
-    <li class="nav__item"><a href="admin_statistiques.php" class="nav__link">Statistique</a></li>
+    <li class="nav__item"><a href="admin.php" class="nav__link active-link">Administration</a></li>
+    <li class="nav__item"><a href="admin_statistiques.php" class="nav__link ">Statistique</a></li>
   <?php endif; ?>
 </ul>
         </div>
@@ -174,35 +144,63 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
         </div>
       </nav>
     </header>
+<main class="main container section">
 
-    <div class="create-account">
-      <h2 class="section__title">Modifier mes informations</h2>
-      <form action="modifierUser.php" method="post" enctype="multipart/form-data">
-        <input type="hidden" name="id" value="<?= htmlspecialchars($userID) ?>">
-
-        <label>Nom d'utilisateur :</label>
-        <input type="text" class="form__input" name="username" required>
-
-        <label>Mot de passe :</label>
-        <input type="password" class="form__input" name="password"  required>
-
-        <label>Photo de profil :</label>
-        <input type="file" class="form__input" name="profile_picture" accept="image/*">
-
-        <div class="form__btn">
-          <button type="submit" class="btn">Enregistrer les modifications</button>
+<?php if (empty($produits)): ?>
+  <p class="no-products">Aucune œuvre non approuvée pour le moment.</p>
+<?php else: ?>
+  <div class="products__container grid">
+    <?php foreach ($produits as $prod): ?>
+      <?php 
+        // Récupérer le nom complet du créateur
+        $createur = $art->getNomCreateur($prod->created_by);
+      ?>
+      <div class="product__item">
+        <div class="product__banner">
+          <a href="details.html" class="product__images">
+            <img
+              src="imagesart/<?= htmlspecialchars($prod->img_art) ?>"
+              alt="<?= htmlspecialchars($prod->title) ?>"
+              class="product__img default"
+            />
+            <img
+              src="imagesart/<?= htmlspecialchars($prod->img_art) ?>"
+              alt="<?= htmlspecialchars($prod->title) ?>"
+              class="product__img hover"
+            />
+          </a>
         </div>
-      </form>
- <?php if ($connected && $role === "artiste") : ?>
-      <form action="gererArt.php" method="POST" class="form__btn">
-        <button type="submit" class="btn" >Voir vos publication</button>
-      </form>
-                  <?php endif; ?>
+        <div class="product__content">
+          <span class="product__category"><?= htmlspecialchars($prod->category) ?></span>
+          <h3 class="product__title"><?= htmlspecialchars($prod->title) ?></h3>
+          <div class="product__price"><?= number_format($prod->price, 2, ',', ' ') ?> €</div>
+          <div class="product__creator">Créé par : <strong><?= htmlspecialchars($createur) ?></strong></div>
+
+          <!-- Formulaire pour approuver/refuser -->
+          <form method="post" action="approve_action.php" style="margin-top: 1rem; display: flex; gap: 1rem; align-items: center;">
+  <input type="hidden" name="id_artwork" value="<?= $prod->ID_artwork ?>" />
+
+  <button type="submit" name="action" value="approve"
+    style="background-color: hsl(176, 88%, 27%); color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer;">
+    Approuver
+  </button>
+
+  <button type="submit" name="action" value="reject"
+    style="background-color: #E73CB9FF; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer;">
+    Ne pas approuver
+  </button>
+</form>
+
+        </div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+<?php endif; ?>
+
+</main>
 
 
-      <div class="art-touch">Votre profil est entre de bonnes mains 👤</div>
-    </div>
-     <!--=============== NEWSLETTER ===============-->
+ <!--=============== NEWSLETTER ===============-->
       <section class="newsletter section home__newsletter">
         <div class="newsletter__container container grid">
           <h3 class="newsletter__title flex">
@@ -228,7 +226,7 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
           <h4 class="footer__subtitle">Contact</h4>
           <p class="footer__description"><span>Adresse:</span> Sfax,Tunisie</p>
           <p class="footer__description"><span>Téléphone:</span> (+216)51 267 554/(+216)24 129 525</p>
-          <p class="footer__description"><span>Email:</span>Hbaieb.yousef@gmail.com/Malekneili66@gmail.com</p>
+          <p class="footer__description"><span>Email:</span>Hbaieb.yousef@gmail.com</p>
 
           <div class="footer__social">
             <h4 class="footer__subtitle">Suivez-nous</h4>
@@ -252,5 +250,5 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
         </div>
       </div>
     </footer>
-  </body>
+</body>
 </html>

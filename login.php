@@ -1,10 +1,11 @@
+
 <?php
 require_once "session.php"; // session_start() est déjà dans ce fichier
 
-// Optionnel : récupérer le rôle si connecté
 $connected = isset($_SESSION["connecte"]) && $_SESSION["connecte"] === "1";
+$username = $connected ? htmlspecialchars($_SESSION["username"] ?? 'Utilisateur') : '';
 $role = $connected ? ($_SESSION["role"] ?? '') : '';
-?>
+?> 
 <?php
 require_once "session.php";  // inclut session_start() et les fonctions
 
@@ -108,6 +109,19 @@ if (isset($_POST['submit_login'])) {
              <li class="nav__item">
               <a href="login-register.php" class="nav__link">s'inscrire</a>
             </li>
+            
+                         <li class="nav__item">
+<?php if ($connected && $username === 'root'): ?>
+  <a href="admin.php" class="nav__link">Administration</a>
+<?php endif; ?>
+</li>
+
+
+                         <li class="nav__item">
+<?php if ($connected && $username === 'root'): ?>
+  <a href="admin_statistiques.php" class="nav__link">Statistique</a>
+<?php endif; ?>
+</li>
           </ul>
           <div class="header__search">
             <input

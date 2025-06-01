@@ -4,8 +4,7 @@ require_once "session.php"; // session_start() est déjà dans ce fichier
 $connected = isset($_SESSION["connecte"]) && $_SESSION["connecte"] === "1";
 $username = $connected ? htmlspecialchars($_SESSION["username"] ?? 'Utilisateur') : '';
 $role = $connected ? ($_SESSION["role"] ?? '') : '';
-?>
-
+?> 
 <!DOCTYPE html>
 <html lang="fr">
   <head>
@@ -91,23 +90,40 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 2rem;
       }
-      .button-container {
-    display: flex;
-    justify-content: center; /* Centre horizontalement */
-    align-items: center;     /* Centre verticalement (si tu donnes une hauteur) */
-    height: 100px; /* Facultatif, pour tester le centrage vertical */
+.button-container {
+  text-align: center; /* centre le bouton horizontalement */
+  margin: 20px 0;
 }
 
 .btn {
-    padding: 10px 20px;
-    background-color: #1A7A68
+  display: inline-flex;         /* permet centrage vertical + horizontal */
+  justify-content: center;      /* centre horizontalement */
+  align-items: center;          /* centre verticalement */
+  padding: 12px 28px;
+    background-color:hsl(176, 88%, 27%);
 
-;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    font-weight: bold;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;           /* au cas où */
 }
+
+
+.btn:hover {
+  background-color: white;
+  text:  background-color:hsl(176, 88%, 27%);
+ /* bleu plus foncé au survol */
+  box-shadow: 0 6px 12px rgba(0,86,179,0.5);
+}
+
+
+
 .section--lg {
   padding-top: 10px !important;
   margin-top: 0 !important;
@@ -117,6 +133,18 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
 }
+.footer__description .email {
+  display: block;
+}
+  strong {
+    color: #FFAAAA;
+  }
+  .artistry{
+        color: #FFAAAA;
+        font-weight: bold;
+        font-size: 1.5rem;
+
+  }
 
 
     </style>
@@ -140,27 +168,29 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
             alt="website logo"
           />        </a>
         <div class="nav__menu" id="nav-menu">
-          <ul class="nav__list">
-            <li class="nav__item"><a href="index.php" class="nav__link active-link">Home</a></li>
-            <li class="nav__item"><a href="shop.php" class="nav__link ">Shop</a></li>
-             <?php if ($connected) : ?>
-    <li class="nav__item">
-      <a href="accounts.php" class="nav__link">My Account</a>
-    </li>
+ <ul class="nav__list">
+  <li class="nav__item"><a href="index.php" class="nav__link active-link">Home</a></li>
+  <li class="nav__item"><a href="shop.php" class="nav__link">Shop</a></li>
+
+  <?php if ($connected): ?>
+    <li class="nav__item"><a href="accounts.php" class="nav__link">My Account</a></li>
+    <?php if ($role === "artiste"): ?>
+      <li class="nav__item"><a href="compare.php" class="nav__link">Publication</a></li>
+    <?php endif; ?>
+  <?php else: ?>
+    <li class="nav__item"><a href="login.php" class="nav__link">Se connecter</a></li>
+    <li class="nav__item"><a href="login-register.php" class="nav__link">S'inscrire</a></li>
   <?php endif; ?>
 
-            <?php if ($connected && $role === "artiste") : ?>
-              <li class="nav__item"><a href="compare.php" class="nav__link">Publication</a></li>
-            <?php endif; ?>
-            <li class="nav__item"><a href="login.php" class="nav__link">Se connecter</a></li>
-                        <li class="nav__item"><a href="login-register.php" class="nav__link">s'inscrire</a></li>
+  <?php if ($connected && $username === 'root'): ?>
+    <li class="nav__item"><a href="admin.php" class="nav__link">Administration</a></li>
+    <li class="nav__item"><a href="admin_statistiques.php" class="nav__link">Statistique</a></li>
+  <?php endif; ?>
+</ul>
 
-          </ul>
         </div>
         <div class="header__user-actions">
-          <a href="wishlist.php" class="header__action-btn" title="Wishlist">
-            <img src="assets/img/icon-heart.svg" alt="" /><span class="count">3</span>
-          </a>
+         
           <a href="cart.php" class="header__action-btn" title="Cart">
             <img src="assets/img/icon-cart.svg" alt="" /><span class="count">3</span>
           </a>
@@ -174,7 +204,7 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
       <section class="home section--lg">
         <div class="home__container container grid">
           <div class="home__content">
-            <span class="home__subtitle">Bienvenue chez Artistry, où chaque âme vibre au rythme de l’art.</span>
+            <span class="home__subtitle">Bienvenue chez <span class="artistry">Artistry</span>, où chaque âme vibre au rythme de l’art.</span>
             <h1 class="home__title">Découvrez les talents des artistes du numérique</h1>
             <p class="home__description">
               Une plateforme dédiée à l'exposition et à la vente de créations artistiques uniques : peintures, logos, montages, illustrations digitales et bien plus encore.
@@ -218,7 +248,12 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
           <h4 class="footer__subtitle">Contact</h4>
           <p class="footer__description"><span>Adresse:</span> Sfax,Tunisie</p>
           <p class="footer__description"><span>Téléphone:</span> (+216)51 267 554/(+216)24 129 525</p>
-          <p class="footer__description"><span>Email:</span>Hbaieb.yousef@gmail.com</p>
+<p class="footer__description">
+  <span>Email:</span>
+  <span class="email">Hbaieb.yousef@gmail.com</span>
+  <span class="email">Malekneili66@gmail.com</span>
+</p>
+
 
           <div class="footer__social">
             <h4 class="footer__subtitle">Suivez-nous</h4>
