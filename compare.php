@@ -228,6 +228,8 @@ document.addEventListener("DOMContentLoaded", function () {
           <option value="illustration">Illustration</option>
           <option value="photographie">Photographie</option>
           <option value="Stickers">Stickers</option>
+                    <option value="Accessoires">Accessoires</option>
+
 
                     <option value="Anime">Anime</option>
                                         <option value="Enfant">Enfant</option>

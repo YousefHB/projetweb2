@@ -33,5 +33,14 @@ class achat
         $stmt->execute(['user_id' => $user_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+public function deleteAchat($id_artwork, $id_user)
+{
+    $cnx = new connexion();
+    $pdo = $cnx->CNXbase();
+
+    $stmt = $pdo->prepare("DELETE FROM achat WHERE id_artwork = ? AND id_user = ?");
+    return $stmt->execute([$id_artwork, $id_user]);
+}
+
 }
 ?>

@@ -20,6 +20,19 @@ $stmt = $pdo->query("
 ");
 $nb_publications = $stmt->fetch()['nb_publications'];
 
+
+// Nombre total d’articles vendus et le montant total des ventes
+$stmt = $pdo->query("
+  SELECT 
+    count(*) AS total_articles_vendus, 
+    SUM(total) AS total_ventes
+  FROM commande
+");
+$result = $stmt->fetch();
+$total_articles_vendus = $result['total_articles_vendus'] ?? 0;
+$total_ventes = $result['total_ventes'] ?? 0;
+
+
 ?>
 <?php
 require_once "session.php"; // session_start() est déjà dans ce fichier
@@ -182,8 +195,14 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
 
   <div class="card">
     <h2>Publications</h2>
-    <p>🖼️ Publications publiées par des artistes : <strong><?= $nb_publications ?></strong></p>
+    <p>🖼️ Publications publiées par des artistes : <strong><?= 1+$nb_publications ?></strong></p>
   </div>
+  <div class="card">
+  <h2>Ventes</h2>
+  <p>🛒 Nombre total des commandes : <strong><?= $total_articles_vendus ?></strong></p>
+  <p>💰 Montant total des ventes : <strong><?= number_format($total_ventes, 2, ',', ' ') ?> TND</strong></p>
+</div>
+
 </main>
 <!--=============== NEWSLETTER ===============-->
       <section class="newsletter section home__newsletter">

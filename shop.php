@@ -150,7 +150,7 @@ $currentUser = $connected ? $user->getUserByID($userID) : null;
                 <div class="product__content">
                   <span class="product__category"><?= htmlspecialchars($prod->category) ?></span>
                   <h3 class="product__title"><?= htmlspecialchars($prod->title) ?></h3>
-                  <div class="product__price"><?= number_format($prod->price, 2, ',', ' ') ?> €</div>
+                  <div class="product__price"><?= number_format($prod->price, 2, ',', ' ') ?> DT</div>
                   <div class="product__creator">Créé par : <strong><?= htmlspecialchars($createur) ?></strong></div>
                 </div>
               </div>
@@ -167,7 +167,7 @@ $currentUser = $connected ? $user->getUserByID($userID) : null;
         <img src="./assets/img/icon-email.svg" alt="" class="newsletter__icon" />
         Inscrivez-vous à Artistry
       </h3>
-      <p class="newsletter__description">...et recevez un coupon de 25€ pour votre premier achat.</p>
+      <p class="newsletter__description">...et recevez un coupon de 25DT pour votre premier achat.</p>
       <form action="" class="newsletter__form">
         <input type="text" placeholder="Entrez votre e-mail" class="newsletter__input" />
         <a href="login-register.php" class="newsletter__btn">S'inscrire</a>

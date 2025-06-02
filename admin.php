@@ -173,7 +173,7 @@ $role = $connected ? ($_SESSION["role"] ?? '') : '';
         <div class="product__content">
           <span class="product__category"><?= htmlspecialchars($prod->category) ?></span>
           <h3 class="product__title"><?= htmlspecialchars($prod->title) ?></h3>
-          <div class="product__price"><?= number_format($prod->price, 2, ',', ' ') ?> €</div>
+          <div class="product__price"><?= number_format($prod->price, 2, ',', ' ') ?> DT</div>
           <div class="product__creator">Créé par : <strong><?= htmlspecialchars($createur) ?></strong></div>
 
           <!-- Formulaire pour approuver/refuser -->
