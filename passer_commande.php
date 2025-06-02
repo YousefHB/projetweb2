@@ -21,7 +21,7 @@ function passerCommande($pdo, $user_id) {
     // Récupérer les achats depuis la base
         var_dump($_POST['quantite']);
 
-    $achats = recupererAchats($pdo, $user_id);
+    $achats = recupererAchats($pdo, $user_id); // pour récupérer les achats de l'utilisateur
 
     // Récupérer les quantités envoyées par POST
     $quantites_post = $_POST['quantite'] ?? [];
@@ -51,7 +51,7 @@ function passerCommande($pdo, $user_id) {
 }
 
 
-function recupererAchats($pdo, $user_id) {
+function recupererAchats($pdo, $user_id) {     //pour récupérer les achats de l'utilisateur avec join sur art pour obtenir le prix
     $stmt = $pdo->prepare("
         SELECT a.*, art.price AS price 
         FROM achat a
